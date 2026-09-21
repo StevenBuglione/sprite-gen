@@ -41,6 +41,9 @@ def load_spec(job: Path) -> dict:
     spec.setdefault("steps", 8)
     spec.setdefault("seed", 424242)
     spec.setdefault("chroma", "#FF00FF")
+    spec.setdefault("matte_profile", "chroma")
+    if spec["matte_profile"] not in {"chroma", "neutral-warm", "deferred"}:
+        raise ValueError("matte_profile must be chroma, neutral-warm or deferred")
     spec.setdefault("loop_last_frame", True)
     spec.setdefault("audio", False)
     spec.setdefault("base_frames", 8)
@@ -212,7 +215,8 @@ def newest_run() -> Path:
     runs = Path("/home/olfa/ai/sprite-pipeline/workspace/runs")
     if not runs.exists():
         runs = SPRITE_H3 / "runs"
-    cands = sorted(runs.glob("*"), key=lambda p: p.stat().st_mtime, reverse=True)
+    # Repairs change old run mtimes; timestamped names preserve creation order.
+    cands = sorted((p for p in runs.glob("*") if p.is_dir()), key=lambda p: p.name, reverse=True)
     if not cands:
         raise SystemExit("no sprite-h3 run directory")
     return cands[0]
@@ -228,6 +232,11 @@ def main() -> int:
     sh3("run", str(project), "--action", spec["action"], "--facing", spec["facing"])
     run = newest_run()
     cell = run / "actions" / spec["action"] / spec["facing"]
+    if spec["matte_profile"] == "deferred":
+        collect_artifacts(job / "out", spec, run, cell)
+        print("wrote raw video kit; neural matting pending", job / "out", flush=True)
+        return 0
+    subprocess.run([str(PY), str(Path(__file__).with_name("clean_matte.py")), "reprocess", str(run), "--profile", spec["matte_profile"], "--key", spec["chroma"]], check=True)
     sh3("review", str(run), "--action", spec["action"], "--facing", spec["facing"])
     sh3(
         "curate",
@@ -278,6 +287,25 @@ def collect_artifacts(out: Path, spec: dict, run: Path, cell: Path, *, pack_warn
     if motion.exists():
         _copy(motion, out / "motion.txt")
 
+    raw_frames = sorted((cell / "raw" / "frames").glob("*.png"))
+    for png in raw_frames:
+        _copy(png, out / "frames" / "raw" / png.name)
+    if spec.get("matte_profile") == "deferred":
+        if not mp4.exists() or not raw_frames:
+            raise RuntimeError("Generation did not produce both a video and lossless raw frames")
+        manifest = {
+            "action": action, "facing": facing, "video": f"video/{action}.mp4",
+            "raw_frames_dir": "frames/raw", "raw_frame_count": len(raw_frames),
+            "all_frames_dir": None, "all_frame_count": 0,
+            "matte_status": "pending_external_processing", "sheet": None,
+            "sheet_json": None, "contact_sheet": None,
+            "fps": spec.get("fps", 24), "run": str(run), "spec": spec,
+            "warnings": ["Raw RGB source only. Run neural matting before game import."],
+        }
+        (out / "manifest.json").write_text(json.dumps(manifest, indent=2) + "\n")
+        (out / "run.json").write_text(json.dumps({"run": str(run), "spec": spec}, indent=2))
+        return
+
     rgba_dir = None
     proc_revs = sorted((cell / "processing").glob("*/frames/rgba"))
     if proc_revs:
@@ -314,6 +342,8 @@ def collect_artifacts(out: Path, spec: dict, run: Path, cell: Path, *, pack_warn
         "contact_sheet": "sheet/contact-sheet.png" if (out / "sheet/contact-sheet.png").exists() else None,
         "all_frames_dir": "frames/all",
         "all_frame_count": all_frame_count,
+        "raw_frames_dir": "frames/raw" if raw_frames else None,
+        "raw_frame_count": len(raw_frames),
         "warnings": [pack_warning] if pack_warning else [],
         "selected_frames": selected,
         "selected_count": len(selected),
@@ -324,6 +354,12 @@ def collect_artifacts(out: Path, spec: dict, run: Path, cell: Path, *, pack_warn
         "run": str(run),
         "spec": spec,
     }
+    qa_path = run / "matte-quality.json"
+    if qa_path.exists():
+        _copy(qa_path,out / "matte-quality.json")
+        manifest["matte_quality"] = json.loads(qa_path.read_text())
+        if not manifest["matte_quality"].get("usable",False):
+            manifest["warnings"].append("Rejected background quality; inspect retained raw video before importing.")
     (out / "manifest.json").write_text(json.dumps(manifest, indent=2) + "\n")
     (out / "run.json").write_text(json.dumps({"run": str(run), "spec": spec}, indent=2))
 

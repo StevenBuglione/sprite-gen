@@ -55,6 +55,18 @@ Hot jobs (worker already warmed) are ~2 minutes at default settings. First job a
 
 Do **not** only use `sheet/sheet.png`. That is an 8-frame 128×128 atlas. Full animation is `frames/all`.
 
+For neural matting on a separate GPU, use `--chroma '#808080'
+--matte-profile deferred`. This returns `frames/raw` lossless RGB frames and the
+source video, with `matte_status: pending_external_processing`. It deliberately
+does not publish `frames/all` or a game-ready sheet. Finish matting before import.
+This avoids baking saturated magenta/green spill into generated edges. The
+neutral-gray direction was visually better in the demon-character qualification;
+the extraction model alone did not fix saturated spill in the old footage.
+
+`neutral-warm` is a legacy opt-in palette suppression experiment. It excludes
+intentional blue/green/purple, and the game owner rejected its visual quality.
+Do not present its residual-color counter as proof of clean art.
+
 ```
 manifest.json                 start here
 video/{action}.mp4

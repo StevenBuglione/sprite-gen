@@ -13,38 +13,39 @@ import (
 // Spec is the full job request. Defaults live in defaults.toml; every field
 // can be overridden by --config and then by CLI flags (last write wins).
 type Spec struct {
-	Name     string  `json:"name" toml:"name"`
-	Action   string  `json:"action" toml:"action"`
-	Facing   string  `json:"facing" toml:"facing"`
-	Recipe   string  `json:"recipe" toml:"recipe"`
-	Style    string  `json:"style" toml:"style"`
-	Identity string  `json:"identity" toml:"identity"`
-	Motion   string  `json:"motion" toml:"motion"`
-	Prompt   string  `json:"prompt" toml:"prompt"`
-	Width    int     `json:"width" toml:"width"`
-	Height   int     `json:"height" toml:"height"`
-	Seconds  float64 `json:"seconds" toml:"seconds"`
-	FPS      int     `json:"fps" toml:"fps"`
-	Steps    int     `json:"steps" toml:"steps"`
-	Sampler  string  `json:"sampler" toml:"sampler"`
-	Scheduler string `json:"scheduler" toml:"scheduler"`
-	Seed     int64   `json:"seed" toml:"seed"`
-	CFG      float64 `json:"cfg" toml:"cfg"`
-	UNet     string  `json:"unet" toml:"unet"`
-	LoRA     string  `json:"lora" toml:"lora"`
-	CLIP     string  `json:"clip" toml:"clip"`
-	Chroma   string  `json:"chroma" toml:"chroma"`
+	Name              string  `json:"name" toml:"name"`
+	Action            string  `json:"action" toml:"action"`
+	Facing            string  `json:"facing" toml:"facing"`
+	Recipe            string  `json:"recipe" toml:"recipe"`
+	Style             string  `json:"style" toml:"style"`
+	Identity          string  `json:"identity" toml:"identity"`
+	Motion            string  `json:"motion" toml:"motion"`
+	Prompt            string  `json:"prompt" toml:"prompt"`
+	Width             int     `json:"width" toml:"width"`
+	Height            int     `json:"height" toml:"height"`
+	Seconds           float64 `json:"seconds" toml:"seconds"`
+	FPS               int     `json:"fps" toml:"fps"`
+	Steps             int     `json:"steps" toml:"steps"`
+	Sampler           string  `json:"sampler" toml:"sampler"`
+	Scheduler         string  `json:"scheduler" toml:"scheduler"`
+	Seed              int64   `json:"seed" toml:"seed"`
+	CFG               float64 `json:"cfg" toml:"cfg"`
+	UNet              string  `json:"unet" toml:"unet"`
+	LoRA              string  `json:"lora" toml:"lora"`
+	CLIP              string  `json:"clip" toml:"clip"`
+	Chroma            string  `json:"chroma" toml:"chroma"`
+	MatteProfile      string  `json:"matte_profile" toml:"matte_profile"`
 	FigureHeightRatio float64 `json:"figure_height_ratio" toml:"figure_height_ratio"`
 	BaselineRatio     float64 `json:"baseline_ratio" toml:"baseline_ratio"`
 	LoopLastFrame     bool    `json:"loop_last_frame" toml:"loop_last_frame"`
 	Audio             bool    `json:"audio" toml:"audio"`
-	CellWidth  int `json:"cell_width" toml:"cell_width"`
-	CellHeight int `json:"cell_height" toml:"cell_height"`
-	BaseFrames int `json:"base_frames" toml:"base_frames"`
-	FrameMS    int `json:"frame_ms" toml:"frame_ms"`
-	URL            string `json:"url,omitempty" toml:"url"`
-	SSH            string `json:"ssh,omitempty" toml:"ssh"`
-	TimeoutSeconds int    `json:"timeout_seconds" toml:"timeout_seconds"`
+	CellWidth         int     `json:"cell_width" toml:"cell_width"`
+	CellHeight        int     `json:"cell_height" toml:"cell_height"`
+	BaseFrames        int     `json:"base_frames" toml:"base_frames"`
+	FrameMS           int     `json:"frame_ms" toml:"frame_ms"`
+	URL               string  `json:"url,omitempty" toml:"url"`
+	SSH               string  `json:"ssh,omitempty" toml:"ssh"`
+	TimeoutSeconds    int     `json:"timeout_seconds" toml:"timeout_seconds"`
 }
 
 func Default() Spec {
@@ -53,10 +54,10 @@ func Default() Spec {
 		Style: "painterly 2D-animated game-sprite, inked illustration with cel-shaded cloth and a clean silhouette",
 		Width: 512, Height: 512, Seconds: 2, FPS: 24, Steps: 4,
 		Sampler: "euler", Scheduler: "simple", Seed: 424242, CFG: 1,
-		UNet: "minimax_h3_fl2va_pruned_int8_convrot.safetensors",
-		LoRA: "minimax_h3_fl2v_turbo_4step_v1.0_768p_comfyui_bf16.safetensors",
-		CLIP: "qwen3vl_32b_minimax_h3_int8_convrot.safetensors",
-		Chroma: "#FF00FF", FigureHeightRatio: 0.70, BaselineRatio: 0.856,
+		UNet:   "minimax_h3_fl2va_pruned_int8_convrot.safetensors",
+		LoRA:   "minimax_h3_fl2v_turbo_4step_v1.0_768p_comfyui_bf16.safetensors",
+		CLIP:   "qwen3vl_32b_minimax_h3_int8_convrot.safetensors",
+		Chroma: "#FF00FF", MatteProfile: "chroma", FigureHeightRatio: 0.70, BaselineRatio: 0.856,
 		LoopLastFrame: true, Audio: false,
 		CellWidth: 128, CellHeight: 128, BaseFrames: 8, FrameMS: 100,
 		URL: "http://10.10.10.8:8787", SSH: "olfa@10.10.10.8", TimeoutSeconds: 900,
@@ -213,6 +214,8 @@ func setField(s *Spec, k, v string) error {
 		s.CLIP = v
 	case "chroma":
 		s.Chroma = v
+	case "matte_profile":
+		s.MatteProfile = v
 	case "figure_height_ratio":
 		n, err := strconv.ParseFloat(v, 64)
 		s.FigureHeightRatio = n

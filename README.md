@@ -1,5 +1,10 @@
 # sprite-gen
 
+For a separate neural matting worker, `--chroma '#808080' --matte-profile deferred`
+returns the original lossless `frames/raw` and video. The manifest explicitly
+marks transparency as pending and omits game-ready frames/sheets. This supports
+video generation and matting on different GPUs without lossy MP4 round trips.
+
 Go CLI that sends a character still to **olfa** (`10.10.10.8`) and returns a MiniMax-H3 video plus a packed sprite sheet.
 
 Default recipe is **quality**: INT8 FL2VA, 4-step turbo LoRA, 512×512, requested 2 s, last frame locked to the first, no audio. Use the live flags or defaults.toml for settings; actual video frame count is reported in manifest.json.

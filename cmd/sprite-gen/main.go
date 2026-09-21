@@ -74,6 +74,7 @@ func runGenerate(args []string) int {
 	_ = fs.String("lora", s.LoRA, "8step|4step|none|filename")
 	fs.StringVar(&s.CLIP, "clip", s.CLIP, "text encoder filename")
 	fs.StringVar(&s.Chroma, "chroma", s.Chroma, "key color")
+	fs.StringVar(&s.MatteProfile, "matte-profile", s.MatteProfile, "chroma|neutral-warm|deferred (deferred returns raw frames for external neural matting)")
 	fs.Float64Var(&s.FigureHeightRatio, "figure-height-ratio", s.FigureHeightRatio, "figure height vs canvas")
 	fs.Float64Var(&s.BaselineRatio, "baseline-ratio", s.BaselineRatio, "foot baseline")
 	_ = fs.Bool("loop-last-frame", s.LoopLastFrame, "pin last frame to first")
@@ -141,6 +142,8 @@ func runGenerate(args []string) int {
 			s.CLIP = f.Value.String()
 		case "chroma":
 			s.Chroma = f.Value.String()
+		case "matte-profile":
+			s.MatteProfile = f.Value.String()
 		case "figure-height-ratio":
 			fmt.Sscanf(f.Value.String(), "%f", &s.FigureHeightRatio)
 		case "baseline-ratio":
