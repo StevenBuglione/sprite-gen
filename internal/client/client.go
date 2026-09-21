@@ -141,7 +141,17 @@ func downloadZip(c *http.Client, url, outDir string) error {
 	}
 	defer zr.Close()
 	for _, f := range zr.File {
-		dest := filepath.Join(outDir, filepath.Base(f.Name))
+		if f.FileInfo().IsDir() {
+			continue
+		}
+		rel := filepath.FromSlash(f.Name)
+		if strings.Contains(rel, "..") {
+			continue
+		}
+		dest := filepath.Join(outDir, rel)
+		if err := os.MkdirAll(filepath.Dir(dest), 0o755); err != nil {
+			return err
+		}
 		rc, err := f.Open()
 		if err != nil {
 			return err

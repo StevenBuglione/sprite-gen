@@ -74,6 +74,19 @@ Remote:
 - `--out` local directory
 - `--timeout` seconds
 
+## What comes back
+
+`generate --out DIR` unpacks a full animation kit, not just one atlas:
+
+- `manifest.json` — index for agents
+- `video/{action}.mp4`
+- `sheet/sheet.png` + `sheet.json` + `contact-sheet.png` (8-frame atlas)
+- `frames/all/*.png` — **every** keyed, aligned frame at generation resolution (use this for animation)
+- `frames/selected/*.png` — the 8 frames in the atlas
+- `first-frame/staged.png`, `prompt.txt`
+
+Do not import only `sheet.png` if you need a full cycle. Prefer `frames/all`.
+
 ## Rules
 
 - Do not put MiniMax-H3 on the 10 GB RTX 3080 (`10.10.10.12`). Generate on olfa.

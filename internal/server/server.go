@@ -147,20 +147,25 @@ func (s *Server) artifacts(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Disposition", `attachment; filename="`+id+`.zip"`)
 	zw := zip.NewWriter(w)
 	defer zw.Close()
-	entries, _ := os.ReadDir(out)
-	for _, e := range entries {
-		if e.IsDir() {
-			continue
+	_ = filepath.Walk(out, func(path string, info os.FileInfo, err error) error {
+		if err != nil || info.IsDir() {
+			return err
 		}
-		wf, err := zw.Create(e.Name())
+		rel, err := filepath.Rel(out, path)
 		if err != nil {
-			return
+			return err
 		}
-		f, err := os.Open(filepath.Join(out, e.Name()))
+		rel = filepath.ToSlash(rel)
+		wf, err := zw.Create(rel)
 		if err != nil {
-			return
+			return err
 		}
-		_, _ = io.Copy(wf, f)
+		f, err := os.Open(path)
+		if err != nil {
+			return err
+		}
+		_, copyErr := io.Copy(wf, f)
 		f.Close()
-	}
+		return copyErr
+	})
 }

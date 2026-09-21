@@ -224,22 +224,82 @@ def main() -> int:
         "--accept-suggestions",
     )
     sh3("pack", str(run), "--action", spec["action"], "--facing", spec["facing"])
-    out = job / "out"
-    out.mkdir(exist_ok=True)
+    collect_artifacts(job / "out", spec, run, cell)
+    print("wrote", job / "out")
+    return 0
+
+
+def _copy(src: Path, dest: Path) -> None:
+    dest.parent.mkdir(parents=True, exist_ok=True)
+    shutil.copyfile(src, dest)
+
+
+def collect_artifacts(out: Path, spec: dict, run: Path, cell: Path) -> None:
+    """Ship everything an agent needs to build Godot/Unity animations."""
+    if out.exists():
+        shutil.rmtree(out)
+    out.mkdir(parents=True)
+
+    action = spec["action"]
+    facing = spec["facing"]
     mp4 = cell / "raw" / "output.mp4"
     if mp4.exists():
-        shutil.copyfile(mp4, out / f"{spec['action']}.mp4")
-    for pack in sorted((cell / "repack").glob("*/sheet.png")):
-        shutil.copyfile(pack, out / "sheet.png")
-        contact = pack.parent / "contact-sheet.png"
-        meta = pack.parent / "sheet.json"
-        if contact.exists():
-            shutil.copyfile(contact, out / "contact-sheet.png")
-        if meta.exists():
-            shutil.copyfile(meta, out / "sheet.json")
+        _copy(mp4, out / "video" / f"{action}.mp4")
+
+    staged = cell / "input" / "staged.png"
+    if staged.exists():
+        _copy(staged, out / "first-frame" / "staged.png")
+    prompt = cell / "resolved-prompt.txt"
+    if prompt.exists():
+        _copy(prompt, out / "prompt.txt")
+    motion = cell / "resolved-motion.txt"
+    if motion.exists():
+        _copy(motion, out / "motion.txt")
+
+    rgba_dir = None
+    proc_revs = sorted((cell / "processing").glob("*/frames/rgba"))
+    if proc_revs:
+        rgba_dir = proc_revs[-1]
+        for png in sorted(rgba_dir.glob("*.png")):
+            _copy(png, out / "frames" / "all" / png.name)
+
+    selected = []
+    for pack in sorted((cell / "repack").glob("*")):
+        if not (pack / "sheet.png").exists():
+            continue
+        _copy(pack / "sheet.png", out / "sheet" / "sheet.png")
+        if (pack / "contact-sheet.png").exists():
+            _copy(pack / "contact-sheet.png", out / "sheet" / "contact-sheet.png")
+        if (pack / "sheet.json").exists():
+            _copy(pack / "sheet.json", out / "sheet" / "sheet.json")
+        meta = json.loads((pack / "sheet.json").read_text()) if (pack / "sheet.json").exists() else {}
+        for i, rel in enumerate(meta.get("repack", {}).get("selected_frames") or []):
+            src = run / rel
+            if src.exists():
+                name = f"{i:02d}_{src.name}"
+                _copy(src, out / "frames" / "selected" / name)
+                selected.append(f"frames/selected/{name}")
+
+    manifest = {
+        "action": action,
+        "facing": facing,
+        "video": f"video/{action}.mp4" if mp4.exists() else None,
+        "sheet": "sheet/sheet.png",
+        "sheet_json": "sheet/sheet.json",
+        "contact_sheet": "sheet/contact-sheet.png",
+        "all_frames_dir": "frames/all",
+        "all_frame_count": len(list((out / "frames" / "all").glob("*.png"))) if (out / "frames" / "all").exists() else 0,
+        "selected_frames": selected,
+        "selected_count": len(selected),
+        "fps": spec.get("fps", 24),
+        "frame_ms": spec.get("frame_ms", 100),
+        "cell": {"width": spec.get("cell_width", 128), "height": spec.get("cell_height", 128)},
+        "note": "frames/all is every keyed+aligned frame at generation resolution. frames/selected is the 8-frame loop used in sheet.png. Import frames/all for full animation control.",
+        "run": str(run),
+        "spec": spec,
+    }
+    (out / "manifest.json").write_text(json.dumps(manifest, indent=2) + "\n")
     (out / "run.json").write_text(json.dumps({"run": str(run), "spec": spec}, indent=2))
-    print("wrote", out)
-    return 0
 
 
 if __name__ == "__main__":
