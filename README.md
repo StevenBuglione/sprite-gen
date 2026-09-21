@@ -4,7 +4,7 @@ Go CLI that sends a character still to **olfa** (`10.10.10.8`) and returns a Min
 
 Default recipe is **quality**: BF16 FL2VA, 8-step turbo LoRA, 640×640, 3 s (73 frames), last frame locked to the first, no audio. That is the best sheet we have produced on this box inside a ~2 minute hot-DiT budget.
 
-Agents: read [`SKILL.md`](SKILL.md). Numbers live in [`defaults.toml`](defaults.toml).
+Agents (Codex, etc.): read [`AGENTS.md`](AGENTS.md) first. Short skill: [`SKILL.md`](SKILL.md). Numbers: [`defaults.toml`](defaults.toml). **One generate at a time.**
 
 ## Install (Windows)
 

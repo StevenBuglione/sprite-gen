@@ -3,9 +3,9 @@ name: sprite-gen
 description: >
   Generate game sprite sheets from a character still via MiniMax-H3 on olfa
   (10.10.10.8). Use when the user wants idle/walk/attack sheets, Godot atlases,
-  or to remote-generate sprites. Defaults are the quality recipe (BF16, 8-step
-  turbo, 640², 3s, last-frame lock). Override with flags; do not invent host
-  paths. Run `sprite-gen generate --help` for the live flag list.
+  or to remote-generate sprites. Read AGENTS.md for paths, olfa, and the
+  one-job-at-a-time rule. Defaults are in defaults.toml. Run
+  `sprite-gen generate --help` for flags.
 ---
 
 # sprite-gen
