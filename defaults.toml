@@ -12,18 +12,18 @@ identity = ""
 motion = ""
 prompt = ""
 
-width = 640
-height = 640
-seconds = 3.0
+width = 512
+height = 512
+seconds = 2.0
 fps = 24
-steps = 8
+steps = 4
 sampler = "euler"
 scheduler = "simple"
 seed = 424242
 cfg = 1.0
 
-unet = "minimax_h3_fl2va_bf16.safetensors"
-lora = "minimax_h3_fl2v_turbo_8step_v1.0_comfyui_bf16.safetensors"
+unet = "minimax_h3_fl2va_pruned_int8_convrot.safetensors"
+lora = "minimax_h3_fl2v_turbo_4step_v1.0_768p_comfyui_bf16.safetensors"
 clip = "qwen3vl_32b_minimax_h3_int8_convrot.safetensors"
 chroma = "#FF00FF"
 figure_height_ratio = 0.70

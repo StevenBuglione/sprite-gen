@@ -51,10 +51,10 @@ func Default() Spec {
 	return Spec{
 		Name: "sprite", Action: "idle", Facing: "down", Recipe: "quality",
 		Style: "painterly 2D-animated game-sprite, inked illustration with cel-shaded cloth and a clean silhouette",
-		Width: 640, Height: 640, Seconds: 3, FPS: 24, Steps: 8,
+		Width: 512, Height: 512, Seconds: 2, FPS: 24, Steps: 4,
 		Sampler: "euler", Scheduler: "simple", Seed: 424242, CFG: 1,
-		UNet: "minimax_h3_fl2va_bf16.safetensors",
-		LoRA: "minimax_h3_fl2v_turbo_8step_v1.0_comfyui_bf16.safetensors",
+		UNet: "minimax_h3_fl2va_pruned_int8_convrot.safetensors",
+		LoRA: "minimax_h3_fl2v_turbo_4step_v1.0_768p_comfyui_bf16.safetensors",
 		CLIP: "qwen3vl_32b_minimax_h3_int8_convrot.safetensors",
 		Chroma: "#FF00FF", FigureHeightRatio: 0.70, BaselineRatio: 0.856,
 		LoopLastFrame: true, Audio: false,
@@ -67,17 +67,26 @@ func Default() Spec {
 func (s *Spec) ApplyRecipe(name string) {
 	switch strings.ToLower(strings.TrimSpace(name)) {
 	case "", "quality":
+		// INT8 + 4-step turbo + last-frame lock. DiT is 20 GB and can stay
+		// resident with the encoder under --highvram (~51 GB).
 		s.Recipe = "quality"
-		s.Width, s.Height, s.Seconds, s.Steps = 640, 640, 3, 8
-		s.UNet = "minimax_h3_fl2va_bf16.safetensors"
-		s.LoRA = "minimax_h3_fl2v_turbo_8step_v1.0_comfyui_bf16.safetensors"
+		s.Width, s.Height, s.Seconds, s.Steps = 512, 512, 2, 4
+		s.UNet = "minimax_h3_fl2va_pruned_int8_convrot.safetensors"
+		s.LoRA = "minimax_h3_fl2v_turbo_4step_v1.0_768p_comfyui_bf16.safetensors"
 		s.LoopLastFrame = true
 		s.Audio = false
 	case "fast":
 		s.Recipe = "fast"
-		s.Width, s.Height, s.Seconds, s.Steps = 512, 512, 3, 4
+		s.Width, s.Height, s.Seconds, s.Steps = 512, 512, 2, 4
 		s.UNet = "minimax_h3_fl2va_pruned_int8_convrot.safetensors"
 		s.LoRA = "minimax_h3_fl2v_turbo_4step_v1.0_768p_comfyui_bf16.safetensors"
+		s.LoopLastFrame = true
+		s.Audio = false
+	case "max":
+		s.Recipe = "max"
+		s.Width, s.Height, s.Seconds, s.Steps = 640, 640, 3, 8
+		s.UNet = "minimax_h3_fl2va_bf16.safetensors"
+		s.LoRA = "minimax_h3_fl2v_turbo_8step_v1.0_comfyui_bf16.safetensors"
 		s.LoopLastFrame = true
 		s.Audio = false
 	}

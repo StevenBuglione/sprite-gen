@@ -53,7 +53,7 @@ func runGenerate(args []string) int {
 	image := fs.String("image", "", "source still (required)")
 	out := fs.String("out", "out", "local output directory")
 	config := fs.String("config", "", "TOML overlay")
-	recipe := fs.String("recipe", s.Recipe, "quality|fast")
+	recipe := fs.String("recipe", s.Recipe, "quality|fast|max")
 	fs.StringVar(&s.Name, "name", s.Name, "character name")
 	fs.StringVar(&s.Action, "action", s.Action, "idle, walk, attack, ...")
 	fs.StringVar(&s.Facing, "facing", s.Facing, "down, side, up, _")
@@ -94,7 +94,11 @@ func runGenerate(args []string) int {
 			return 1
 		}
 	}
-	s.ApplyRecipe(*recipe)
+	explicit := map[string]bool{}
+	fs.Visit(func(f *flag.Flag) { explicit[f.Name] = true })
+	if explicit["recipe"] {
+		s.ApplyRecipe(*recipe)
+	}
 	fs.Visit(func(f *flag.Flag) {
 		switch f.Name {
 		case "name":

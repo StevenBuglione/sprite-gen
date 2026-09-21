@@ -35,8 +35,9 @@ sprite-gen serve --listen 0.0.0.0:8787    # on olfa only
 
 | `--recipe` | When |
 |---|---|
-| `quality` (default) | Best sheet. BF16 DiT, 8-step turbo, 640², 3s, last=first, no audio. Target ~2 min once DiT is hot. |
-| `fast` | Prompt hunting only. INT8, 4-step turbo, 512². Can turn/drift. Do not ship. |
+| `quality` (default) | INT8 DiT kept in RAM, 4-step turbo, 512², 2s, last-frame lock. Measured ~124 s hot. |
+| `fast` | Same but 512². |
+| `max` | BF16, 8-step turbo, 3s. Best look, ~8 min. |
 
 Flags after `--recipe` override the recipe.
 
@@ -76,7 +77,7 @@ Remote:
 ## Rules
 
 - Do not put MiniMax-H3 on the 10 GB RTX 3080 (`10.10.10.12`). Generate on olfa.
-- Do not use `--recipe fast` for a sheet the user will import.
-- Do not set `--steps` above 8 with turbo LoRA.
+- `--recipe max` is BF16 and will not hit 2 minutes.
+- Do not set `--steps` above 8 with turbo LoRA. Use last-frame lock instead of extra steps to stop turning.
 - One H3 job at a time on olfa.
 - First job after worker boot is cold (DiT load). Later jobs are the 2-minute target.
