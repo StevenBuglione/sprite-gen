@@ -79,13 +79,28 @@ Defaults live in `defaults.toml`. Override with flags.
 | Sharper 640 | `--width 640 --height 640` (~3 min hot) |
 | Best look, slow | `--recipe max` (BF16, 8-step, ~8 min) — avoid unless asked |
 | New action | `--action walk` (or attack, jump, …) plus `--motion "…"` |
-| Facing | `--facing down` (default), `side`, `up` |
+| Facing | `--facing down` (default), `right`, `left`, `up`; `side` aliases `right` |
 | Stop turning | keep `--loop-last-frame` (default on) |
 | Different seed | `--seed 123` |
 
 `--motion` should be one cycle with timestamps, feet planted for idle, return to the start pose. Do not describe camera or background in `--identity`. Background is chroma `#FF00FF`.
 
 `sprite-gen generate --help` is the live flag list.
+
+The worker classifies idle/guard/parry as static, walk/run as locomotion, and other
+actions as displacement, so it does not append planted-foot rules to a jump or run.
+If a wide weapon or pose does not fit the preview atlas, the job still returns its
+video and `frames/all`; the manifest records a warning and null sheet paths. Use
+`--cell-width 256 --cell-height 192` for wider preview cells. Never discard the full
+frames just because the eight-frame preview sheet could not be packed.
+
+SSH fallback happens only when the worker cannot be reached before submission.
+Once a job is submitted, poll/download failures do not launch another generation.
+Recover artifacts from an existing run without GPU work on olfa:
+
+```bash
+python3 /home/olfa/ai/sprite-gen/worker/recover_artifacts.py JOB_DIR RUN_DIR --out NEW_OUTPUT_DIR
+```
 
 ## If generate fails
 

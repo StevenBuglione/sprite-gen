@@ -56,7 +56,7 @@ func runGenerate(args []string) int {
 	recipe := fs.String("recipe", s.Recipe, "quality|fast|max")
 	fs.StringVar(&s.Name, "name", s.Name, "character name")
 	fs.StringVar(&s.Action, "action", s.Action, "idle, walk, attack, ...")
-	fs.StringVar(&s.Facing, "facing", s.Facing, "down, side, up, _")
+	fs.StringVar(&s.Facing, "facing", s.Facing, "down, up, left, right, _ (side aliases right)")
 	fs.StringVar(&s.Identity, "identity", s.Identity, "view-neutral character description")
 	fs.StringVar(&s.Style, "style", s.Style, "art style")
 	fs.StringVar(&s.Motion, "motion", s.Motion, "one-cycle motion text")

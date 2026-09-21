@@ -4,6 +4,7 @@ import (
 	"archive/zip"
 	"bytes"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"mime/multipart"
@@ -25,6 +26,11 @@ type Job struct {
 	Sheet  string `json:"sheet,omitempty"`
 }
 
+type unavailableError struct{ cause error }
+
+func (e *unavailableError) Error() string { return e.cause.Error() }
+func (e *unavailableError) Unwrap() error { return e.cause }
+
 func Generate(image string, s spec.Spec, outDir string) error {
 	if image == "" {
 		return fmt.Errorf("--image is required")
@@ -36,6 +42,10 @@ func Generate(image string, s spec.Spec, outDir string) error {
 		return err
 	}
 	if err := generateHTTP(image, s, outDir); err != nil {
+		var unavailable *unavailableError
+		if !errors.As(err, &unavailable) {
+			return err // A submitted job may already exist. Never regenerate on SSH.
+		}
 		fmt.Fprintf(os.Stderr, "http %s failed (%v); trying ssh %s\n", s.URL, err, s.SSH)
 		return generateSSH(image, s, outDir)
 	}
@@ -43,6 +53,17 @@ func Generate(image string, s spec.Spec, outDir string) error {
 }
 
 func generateHTTP(image string, s spec.Spec, outDir string) error {
+	// Fallback is safe only before submission. A failed poll, job, or ZIP download
+	// must not silently submit the same GPU work through another transport.
+	probe := &http.Client{Timeout: 5 * time.Second}
+	health, err := probe.Get(strings.TrimRight(s.URL, "/") + "/v1/health")
+	if err != nil {
+		return &unavailableError{err}
+	}
+	health.Body.Close()
+	if health.StatusCode != http.StatusOK {
+		return fmt.Errorf("worker health: %s", health.Status)
+	}
 	body := &bytes.Buffer{}
 	w := multipart.NewWriter(body)
 	specJSON, err := s.JSON()
@@ -97,7 +118,7 @@ func generateHTTP(image string, s spec.Spec, outDir string) error {
 			return downloadZip(client, base+"/v1/jobs/"+job.ID+"/artifacts", outDir)
 		}
 		if st.Status == "error" {
-			return fmt.Errorf("job failed: %s", st.Error)
+			return fmt.Errorf("job %s failed: %s; no automatic regeneration", job.ID, st.Error)
 		}
 		fmt.Printf("status %s\n", st.Status)
 	}

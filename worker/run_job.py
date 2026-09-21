@@ -19,6 +19,16 @@ PY = SPRITE_H3 / ".venv/bin/python"
 CLI = SPRITE_H3 / ".venv/bin/sprite-h3"
 
 
+def action_motion_class(action: str) -> str:
+    """Do not append planted-feet instructions to a running or jumping prompt."""
+    action = action.strip().lower().replace("-", "_")
+    if action in {"idle", "guard", "block", "parry", "perfect_parry", "breathe"}:
+        return "static"
+    if action in {"walk", "run", "sprint", "jog", "sneak", "crawl", "swim"}:
+        return "locomotion"
+    return "displacement"
+
+
 def load_spec(job: Path) -> dict:
     spec = json.loads((job / "spec.json").read_text())
     spec.setdefault("action", "idle")
@@ -40,6 +50,11 @@ def load_spec(job: Path) -> dict:
     spec.setdefault("figure_height_ratio", 0.7)
     spec.setdefault("baseline_ratio", 0.856)
     spec.setdefault("style", "painterly 2D-animated game-sprite")
+    # Preserve the legacy CLI's advertised side-facing alias.
+    if spec["facing"] == "side":
+        spec["facing"] = "right"
+    if spec["facing"] not in {"down", "up", "left", "right", "_"}:
+        raise ValueError(f"Unsupported facing: {spec['facing']!r}")
     return spec
 
 
@@ -162,7 +177,7 @@ figure_height_px = 96
 name = {spec["action"]!r}
 enabled = true
 motion_file = "motions/{spec["action"]}.txt"
-motion_class = "static"
+motion_class = {action_motion_class(spec['action'])!r}
 closed = {loop}
 loop_anchor = "first-last"
 """
@@ -223,8 +238,15 @@ def main() -> int:
         spec["facing"],
         "--accept-suggestions",
     )
-    sh3("pack", str(run), "--action", spec["action"], "--facing", spec["facing"])
-    collect_artifacts(job / "out", spec, run, cell)
+    pack_warning = None
+    try:
+        sh3("pack", str(run), "--action", spec["action"], "--facing", spec["facing"])
+    except subprocess.CalledProcessError as exc:
+        # Full-size frames are the primary artifact. A too-small preview cell must
+        # not discard a successfully generated video or cause an expensive retry.
+        pack_warning = f"Preview atlas could not be packed (exit {exc.returncode}); use frames/all or repack with a larger cell."
+        print(pack_warning, flush=True)
+    collect_artifacts(job / "out", spec, run, cell, pack_warning=pack_warning)
     print("wrote", job / "out")
     return 0
 
@@ -234,7 +256,7 @@ def _copy(src: Path, dest: Path) -> None:
     shutil.copyfile(src, dest)
 
 
-def collect_artifacts(out: Path, spec: dict, run: Path, cell: Path) -> None:
+def collect_artifacts(out: Path, spec: dict, run: Path, cell: Path, *, pack_warning: str | None = None) -> None:
     """Ship everything an agent needs to build Godot/Unity animations."""
     if out.exists():
         shutil.rmtree(out)
@@ -280,15 +302,19 @@ def collect_artifacts(out: Path, spec: dict, run: Path, cell: Path) -> None:
                 _copy(src, out / "frames" / "selected" / name)
                 selected.append(f"frames/selected/{name}")
 
+    all_frame_count = len(list((out / "frames" / "all").glob("*.png")))
+    if not mp4.exists() or all_frame_count == 0:
+        raise RuntimeError("Generation did not produce both a video and full RGBA frames")
     manifest = {
         "action": action,
         "facing": facing,
         "video": f"video/{action}.mp4" if mp4.exists() else None,
-        "sheet": "sheet/sheet.png",
-        "sheet_json": "sheet/sheet.json",
-        "contact_sheet": "sheet/contact-sheet.png",
+        "sheet": "sheet/sheet.png" if (out / "sheet/sheet.png").exists() else None,
+        "sheet_json": "sheet/sheet.json" if (out / "sheet/sheet.json").exists() else None,
+        "contact_sheet": "sheet/contact-sheet.png" if (out / "sheet/contact-sheet.png").exists() else None,
         "all_frames_dir": "frames/all",
-        "all_frame_count": len(list((out / "frames" / "all").glob("*.png"))) if (out / "frames" / "all").exists() else 0,
+        "all_frame_count": all_frame_count,
+        "warnings": [pack_warning] if pack_warning else [],
         "selected_frames": selected,
         "selected_count": len(selected),
         "fps": spec.get("fps", 24),

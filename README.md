@@ -2,7 +2,7 @@
 
 Go CLI that sends a character still to **olfa** (`10.10.10.8`) and returns a MiniMax-H3 video plus a packed sprite sheet.
 
-Default recipe is **quality**: BF16 FL2VA, 8-step turbo LoRA, 640×640, 3 s (73 frames), last frame locked to the first, no audio. That is the best sheet we have produced on this box inside a ~2 minute hot-DiT budget.
+Default recipe is **quality**: INT8 FL2VA, 4-step turbo LoRA, 512×512, requested 2 s, last frame locked to the first, no audio. Use the live flags or defaults.toml for settings; actual video frame count is reported in manifest.json.
 
 Agents (Codex, etc.): read [`AGENTS.md`](AGENTS.md) first. Short skill: [`SKILL.md`](SKILL.md). Numbers: [`defaults.toml`](defaults.toml). **One generate at a time.**
 
@@ -41,7 +41,13 @@ One H3 job at a time. Do not run Pixal3D and sprite-gen together.
 
 | `--recipe` | Use |
 |---|---|
-| `quality` | Ship. BF16 + 8-step turbo. |
-| `fast` | Prompt hunt only. INT8 + 4-step. |
+| `quality` | INT8 + 4-step turbo; current default. |
+| `fast` | INT8 + 4-step turbo; currently the same settings. |
+| `max` | BF16 + 8-step turbo; slower and more memory intensive. |
 
 Every default is a flag. `sprite-gen generate --help` lists them.
+
+Use `frames/all` at the manifest's fps for smooth animation. The small atlas is an
+optional preview; a packing failure preserves full frames and video, with a warning
+in the manifest. Facing accepts `left` and `right`; the older `side` flag aliases right.
+Submitted jobs are never automatically regenerated through SSH after a job or download failure.
