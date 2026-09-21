@@ -1,5 +1,11 @@
 # sprite-gen
 
+The worker invokes sprite-h3 through `worker/cached_sprite_h3.py`. Staged input
+images use SHA256-based upload names so identical references can reuse ComfyUI's
+conditioning cache when only the seed changes. This is scoped to the worker's
+process and does not modify the upstream sprite-h3 installation. Deploy the
+adapter alongside `run_job.py`; different image bytes always get a new name.
+
 For a separate neural matting worker, `--chroma '#808080' --matte-profile deferred`
 returns the original lossless `frames/raw` and video. The manifest explicitly
 marks transparency as pending and omits game-ready frames/sheets. This supports

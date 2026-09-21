@@ -208,7 +208,7 @@ identity = {identity!r}
 
 
 def sh3(*args: str) -> None:
-    cmd = [str(CLI), *args]
+    cmd = [str(PY), str(Path(__file__).with_name('cached_sprite_h3.py')), *args]
     if args and args[0] == "run" and CONFIG.exists():
         cmd.extend(["--config", str(CONFIG)])
     print("+", " ".join(cmd), flush=True)

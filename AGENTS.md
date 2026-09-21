@@ -133,3 +133,8 @@ python3 /home/olfa/ai/sprite-gen/worker/recover_artifacts.py JOB_DIR RUN_DIR --o
 - **Sprite H3 prepare/pack behavior:** `/home/olfa/ai/sprite_h3` (upstream-style install; not this Go repo).
 
 Push fixes to GitHub so Windows and olfa do not drift.
+
+The worker's `cached_sprite_h3.py` adapter is required next to `run_job.py`.
+It uses content-addressed image uploads to preserve Comfy conditioning cache
+reuse for seed comparisons. Test it with sprite-h3's venv and
+`python -m unittest discover -s worker -p test_cached_uploads.py`.
