@@ -127,6 +127,9 @@ def write_workspace(job: Path, spec: dict) -> Path:
     (tmpl / "motions" / f"{spec['action']}.txt").write_text(motion + "\n")
     loop = "true" if spec.get("loop_last_frame", True) else "false"
     style = spec.get("style") or "painterly 2D-animated game-sprite"
+    # Honor the CLI's full-prompt flag instead of silently rebuilding its prose.
+    prompt = spec.get("prompt")
+    prompt_override = f"prompt_override = {json.dumps(prompt, ensure_ascii=False)}\n" if prompt else ""
     (tmpl / "template.toml").write_text(
         f"""name = "job"
 group = "characters"
@@ -183,6 +186,7 @@ motion_file = "motions/{spec["action"]}.txt"
 motion_class = {action_motion_class(spec['action'])!r}
 closed = {loop}
 loop_anchor = "first-last"
+{prompt_override}
 """
     )
     identity = spec.get("identity") or "the character in Picture 1"

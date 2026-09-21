@@ -7,6 +7,16 @@ from run_job import load_spec, write_workspace, collect_artifacts
 
 
 class ActionTemplateTests(unittest.TestCase):
+    def test_full_prompt_override_reaches_action_verbatim(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root=Path(tmp)
+            prompt='One sharply defined sword. No "motion trails".\nKeep the hero\'s silhouette.'
+            (root/'source.png').write_bytes(b'fixture')
+            (root/'spec.json').write_text(json.dumps({'action':'slash','facing':'right','prompt':prompt}))
+            write_workspace(root,load_spec(root))
+            template=tomllib.loads((root/'workspace/templates/job/template.toml').read_text())
+            self.assertEqual(template['actions'][0]['prompt_override'],prompt)
+
     def test_deferred_matte_never_labels_raw_or_keyed_frames_as_game_assets(self):
         with tempfile.TemporaryDirectory() as tmp:
             run=Path(tmp)/'run'; cell=run/'actions/slash/right'
@@ -53,6 +63,7 @@ class ActionTemplateTests(unittest.TestCase):
             with self.subTest(action=action),tempfile.TemporaryDirectory() as tmp:
                 _,template=self.make_template(Path(tmp),action)
                 self.assertEqual(template['actions'][0]['motion_class'],expected)
+                self.assertNotIn('prompt_override',template['actions'][0])
 
     def test_documented_side_alias_reaches_supported_upstream_facing(self):
         with tempfile.TemporaryDirectory() as tmp:
