@@ -1,0 +1,41 @@
+# Default recipe: best MiniMax-H3 quality that can finish near two minutes
+# on olfa (Ryzen AI MAX+ 395, 128 GB unified) once the DiT is resident.
+# Override any key with a CLI flag or a --config TOML file.
+
+name = "sprite"
+action = "idle"
+facing = "down"
+recipe = "quality"
+
+style = "painterly 2D-animated game-sprite, inked illustration with cel-shaded cloth and a clean silhouette"
+identity = ""
+motion = ""
+prompt = ""
+
+width = 640
+height = 640
+seconds = 3.0
+fps = 24
+steps = 8
+sampler = "euler"
+scheduler = "simple"
+seed = 424242
+cfg = 1.0
+
+unet = "minimax_h3_fl2va_bf16.safetensors"
+lora = "minimax_h3_fl2v_turbo_8step_v1.0_comfyui_bf16.safetensors"
+clip = "qwen3vl_32b_minimax_h3_int8_convrot.safetensors"
+chroma = "#FF00FF"
+figure_height_ratio = 0.70
+baseline_ratio = 0.856
+loop_last_frame = true
+audio = false
+
+cell_width = 128
+cell_height = 128
+base_frames = 8
+frame_ms = 100
+
+url = "http://10.10.10.8:8787"
+ssh = "olfa@10.10.10.8"
+timeout_seconds = 900

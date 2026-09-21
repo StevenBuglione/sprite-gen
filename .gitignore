@@ -1,0 +1,12 @@
+/sprite-gen
+/sprite-gen.exe
+/dist/
+/out/
+*.mp4
+*.png
+!docs/**
+.idea/
+.vscode/
+__pycache__/
+*.pyc
+.DS_Store

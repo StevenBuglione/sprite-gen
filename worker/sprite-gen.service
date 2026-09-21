@@ -1,0 +1,16 @@
+[Unit]
+Description=sprite-gen worker (MiniMax-H3 sprite sheets)
+After=network.target
+
+[Service]
+Type=simple
+WorkingDirectory=/home/olfa/ai/sprite-gen
+Environment=SPRITE_GEN_SPRITE_H3=/home/olfa/ai/sprite_h3
+Environment=SPRITE_GEN_COMFY=http://127.0.0.1:8188
+Environment=SPRITE_GEN_DATA=/home/olfa/ai/sprite-gen/data
+ExecStart=/home/olfa/ai/sprite-gen/sprite-gen serve --listen 0.0.0.0:8787 --data /home/olfa/ai/sprite-gen/data --worker /home/olfa/ai/sprite-gen/worker/run_job.py
+Restart=on-failure
+RestartSec=5
+
+[Install]
+WantedBy=default.target
