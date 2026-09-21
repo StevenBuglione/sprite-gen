@@ -1,5 +1,6 @@
 /sprite-gen
 /sprite-gen.exe
+/sprite-gen-linux
 /dist/
 /out/
 *.mp4
