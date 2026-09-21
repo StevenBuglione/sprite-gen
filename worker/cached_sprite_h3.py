@@ -33,6 +33,14 @@ def upload_image(self, image_path: Path, *, subfolder='sprite_h3', overwrite=Fal
 
 
 def main():
+    from sprite_h3 import prompting
+    # These N/A audio sections distract from the visual sprite instructions.
+    # Keep the upstream installation intact and identify our composed template.
+    source = prompting._TEMPLATE_SOURCE
+    for field in (prompting._SOUND, prompting._MUSIC):
+        source = source.replace(field, '')
+    prompting._SOUND = prompting._MUSIC = ''
+    prompting.COMPOSER_SHA256 = hashlib.sha256(source.encode('utf-8')).hexdigest()
     from sprite_h3.backends.comfy_client import ComfyClient
     from sprite_h3.cli import main as upstream_main
     ComfyClient.upload_image=upload_image
