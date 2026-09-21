@@ -7,6 +7,16 @@ from run_job import load_spec, write_workspace, collect_artifacts
 
 
 class ActionTemplateTests(unittest.TestCase):
+    def test_one_shot_does_not_request_an_incompatible_end_frame_lock(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root=Path(tmp)
+            (root/'source.png').write_bytes(b'fixture')
+            (root/'spec.json').write_text(json.dumps({'action':'slash','facing':'right','loop_last_frame':False}))
+            write_workspace(root,load_spec(root))
+            action=tomllib.loads((root/'workspace/templates/job/template.toml').read_text())['actions'][0]
+            self.assertFalse(action['closed'])
+            self.assertEqual(action['loop_anchor'],'first')
+
     def test_full_prompt_override_reaches_action_verbatim(self):
         with tempfile.TemporaryDirectory() as tmp:
             root=Path(tmp)

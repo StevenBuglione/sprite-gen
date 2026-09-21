@@ -126,6 +126,7 @@ def write_workspace(job: Path, spec: dict) -> Path:
     )
     (tmpl / "motions" / f"{spec['action']}.txt").write_text(motion + "\n")
     loop = "true" if spec.get("loop_last_frame", True) else "false"
+    loop_anchor = "first-last" if spec.get("loop_last_frame", True) else "first"
     style = spec.get("style") or "painterly 2D-animated game-sprite"
     # Honor the CLI's full-prompt flag instead of silently rebuilding its prose.
     prompt = spec.get("prompt")
@@ -185,7 +186,7 @@ enabled = true
 motion_file = "motions/{spec["action"]}.txt"
 motion_class = {action_motion_class(spec['action'])!r}
 closed = {loop}
-loop_anchor = "first-last"
+loop_anchor = {loop_anchor!r}
 {prompt_override}
 """
     )
