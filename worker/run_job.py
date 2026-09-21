@@ -187,7 +187,7 @@ identity = {identity!r}
 
 def sh3(*args: str) -> None:
     cmd = [str(CLI), *args]
-    if CONFIG.exists():
+    if args and args[0] == "run" and CONFIG.exists():
         cmd.extend(["--config", str(CONFIG)])
     print("+", " ".join(cmd), flush=True)
     subprocess.check_call(cmd, cwd=str(SPRITE_H3))
