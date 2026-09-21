@@ -13,6 +13,7 @@ import (
 // Spec is the full job request. Defaults live in defaults.toml; every field
 // can be overridden by --config and then by CLI flags (last write wins).
 type Spec struct {
+	Guides            []Guide `json:"guides,omitempty"`
 	Name              string  `json:"name" toml:"name"`
 	Action            string  `json:"action" toml:"action"`
 	Facing            string  `json:"facing" toml:"facing"`
@@ -46,6 +47,12 @@ type Spec struct {
 	URL               string  `json:"url,omitempty" toml:"url"`
 	SSH               string  `json:"ssh,omitempty" toml:"ssh"`
 	TimeoutSeconds    int     `json:"timeout_seconds" toml:"timeout_seconds"`
+}
+
+// Guide is an already registered RGB PNG, carried with the portable job request.
+type Guide struct {
+	Frame int    `json:"frame"`
+	PNG   []byte `json:"png"`
 }
 
 func Default() Spec {

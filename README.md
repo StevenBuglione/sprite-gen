@@ -62,3 +62,16 @@ Use `frames/all` at the manifest's fps for smooth animation. The small atlas is 
 optional preview; a packing failure preserves full frames and video, with a warning
 in the manifest. Facing accepts `left` and `right`; the older `side` flag aliases right.
 Submitted jobs are never automatically regenerated through SSH after a job or download failure.
+
+For authored intermediate poses, `--guides guides.json` accepts a JSON list such
+as `[{"frame":9,"image":"passing.png"}]`. Guide images are opaque RGB PNGs at the
+exact video canvas size; paths are relative to the JSON file. Register the body
+and floor consistently before submitting. Frame zero and a locked final frame
+remain owned by the primary reference. The CLI rejects duplicate/out-of-range
+frames, mismatched canvases, more than eight guides, or PNGs over 6 MiB each.
+
+Guides travel with the job as image bytes and become native `MiniMaxH3AddGuide`
+conditioning nodes. The kit retains guide hashes, staged guide PNGs and the exact
+submitted `workflow.api.json`. They constrain poses; they do not guarantee a
+correct gait, seamless loop, clean alpha, or a particular generation latency.
+Deploy `worker/pose_guides.py` alongside the worker and cached adapter.

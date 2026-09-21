@@ -53,6 +53,7 @@ func runGenerate(args []string) int {
 	image := fs.String("image", "", "source still (required)")
 	out := fs.String("out", "out", "local output directory")
 	config := fs.String("config", "", "TOML overlay")
+	guides := fs.String("guides", "", "JSON array of {frame,image} registered PNG pose guides")
 	recipe := fs.String("recipe", s.Recipe, "quality|fast|max")
 	fs.StringVar(&s.Name, "name", s.Name, "character name")
 	fs.StringVar(&s.Action, "action", s.Action, "idle, walk, attack, ...")
@@ -172,6 +173,14 @@ func runGenerate(args []string) int {
 			fmt.Sscanf(f.Value.String(), "%d", &s.TimeoutSeconds)
 		}
 	})
+	if *guides != "" {
+		var err error
+		s.Guides, err = spec.LoadGuides(*guides, s.Frames(), s.Width, s.Height, s.LoopLastFrame)
+		if err != nil {
+			fmt.Fprintln(os.Stderr, err)
+			return 1
+		}
+	}
 	if err := client.Generate(*image, s, *out); err != nil {
 		fmt.Fprintln(os.Stderr, err)
 		return 1

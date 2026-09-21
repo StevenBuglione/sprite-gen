@@ -8,6 +8,7 @@ remains ComfyUI's responsibility.
 """
 import hashlib
 import mimetypes
+import os
 from pathlib import Path
 import uuid
 
@@ -44,6 +45,9 @@ def main():
     from sprite_h3.backends.comfy_client import ComfyClient
     from sprite_h3.cli import main as upstream_main
     ComfyClient.upload_image=upload_image
+    if os.environ.get('SPRITE_GEN_GUIDE_JOB'):
+        from pose_guides import install
+        install(os.environ['SPRITE_GEN_GUIDE_JOB'])
     return upstream_main()
 
 

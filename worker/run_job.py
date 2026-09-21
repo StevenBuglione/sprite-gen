@@ -234,6 +234,8 @@ def main() -> int:
     wait_comfy()
     patch_workflow(spec)
     project = write_workspace(job, spec)
+    if spec.get('guides'):
+        os.environ['SPRITE_GEN_GUIDE_JOB'] = str(job)
     sh3("run", str(project), "--action", spec["action"], "--facing", spec["facing"])
     run = newest_run()
     cell = run / "actions" / spec["action"] / spec["facing"]
@@ -275,6 +277,16 @@ def collect_artifacts(out: Path, spec: dict, run: Path, cell: Path, *, pack_warn
     if out.exists():
         shutil.rmtree(out)
     out.mkdir(parents=True)
+    # Keep pose evidence without duplicating large base64 images inside manifests.
+    spec = dict(spec)
+    if spec.get('guides'):
+        guides = json.loads((out.parent/'guides/manifest.json').read_text())
+        for guide in guides:
+            _copy(out.parent/'guides'/guide['file'],out/'guides'/guide['file'])
+        spec['guides'] = guides
+        _copy(out.parent/'guides/manifest.json',out/'guides/manifest.json')
+    graph = cell/'raw/output.comfy-request.api.json'
+    if graph.exists(): _copy(graph,out/'workflow.api.json')
 
     action = spec["action"]
     facing = spec["facing"]
