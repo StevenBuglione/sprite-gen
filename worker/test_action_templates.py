@@ -3,10 +3,35 @@ from pathlib import Path
 import tempfile
 import tomllib
 import unittest
+import importlib.util
 from run_job import load_spec, write_workspace, collect_artifacts
 
 
 class ActionTemplateTests(unittest.TestCase):
+    @unittest.skipUnless(importlib.util.find_spec('sprite_h3'), 'Run in the deployed sprite-h3 venv')
+    def test_cli_geometry_survives_real_upstream_motion_presets(self):
+        from PIL import Image
+        from sprite_h3.project import load_project
+        from sprite_h3.preparation.canvas import stage_sprite
+        for name in ('pivot', 'slash', 'jump', 'run', 'idle'):
+            with self.subTest(action=name), tempfile.TemporaryDirectory() as tmp:
+                root = Path(tmp)
+                image = Image.new('RGBA', (32, 48))
+                image.paste((200, 190, 180, 255), (8, 8, 24, 40))
+                image.save(root/'source.png')
+                (root/'spec.json').write_text(json.dumps({'action': name, 'facing': 'right',
+                    'width':896, 'height':640, 'figure_height_ratio':.45, 'baseline_ratio':.856}))
+                path = write_workspace(root, load_spec(root))
+                project = load_project(path, workspace=root/'workspace')
+                action = project.actions[0]
+                self.assertEqual(action.figure_height_ratio.value, .45)
+                self.assertEqual(action.baseline_ratio.value, .856)
+                staged = stage_sprite(root/'source.png', canvas_size=(896,640), background='#808080',
+                    figure_height_ratio=action.figure_height_ratio.value,
+                    baseline_ratio=action.baseline_ratio.value)
+                self.assertEqual(staged.metadata.placement.figure_height, 288)
+                self.assertEqual(staged.metadata.baseline, 547)
+
     def test_one_shot_does_not_request_an_incompatible_end_frame_lock(self):
         with tempfile.TemporaryDirectory() as tmp:
             root=Path(tmp)

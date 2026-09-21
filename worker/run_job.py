@@ -185,6 +185,10 @@ name = {spec["action"]!r}
 enabled = true
 motion_file = "motions/{spec["action"]}.txt"
 motion_class = {action_motion_class(spec['action'])!r}
+# Action-level values outrank upstream motion presets (notably displacement).
+# Keep staged reference geometry identical to the CLI contract and pose guides.
+figure_height_ratio = {spec.get("figure_height_ratio", 0.7)}
+baseline_ratio = {spec.get("baseline_ratio", 0.856)}
 closed = {loop}
 loop_anchor = {loop_anchor!r}
 {prompt_override}
@@ -297,6 +301,9 @@ def collect_artifacts(out: Path, spec: dict, run: Path, cell: Path, *, pack_warn
     staged = cell / "input" / "staged.png"
     if staged.exists():
         _copy(staged, out / "first-frame" / "staged.png")
+    preparation = cell / "input" / "preparation.json"
+    if preparation.exists():
+        _copy(preparation, out / "first-frame" / "preparation.json")
     prompt = cell / "resolved-prompt.txt"
     if prompt.exists():
         _copy(prompt, out / "prompt.txt")
